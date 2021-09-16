@@ -3,6 +3,7 @@ import ArgumentInstanceOf from '@chubbyjs/chubbyjs-mock/dist/Argument/ArgumentIn
 import Call from '@chubbyjs/chubbyjs-mock/dist/Call';
 import MockByCalls, { mockByCallsUsed } from '@chubbyjs/chubbyjs-mock/dist/MockByCalls';
 import ServerRequestFactoryInterface from '@chubbyjs/psr-http-factory/dist/ServerRequestFactoryInterface';
+import StreamFactoryInterface from '@chubbyjs/psr-http-factory/dist/StreamFactoryInterface';
 import UriFactoryInterface from '@chubbyjs/psr-http-factory/dist/UriFactoryInterface';
 import ServerRequestInterface, { QueryParams } from '@chubbyjs/psr-http-message/dist/ServerRequestInterface';
 import UriInterface from '@chubbyjs/psr-http-message/dist/UriInterface';
@@ -14,6 +15,7 @@ import HttpRequestDouble from './Double/HttpRequestDouble';
 import HttpResponseDouble from './Double/HttpResponseDouble';
 import ServerRequestDouble from './Double/ServerRequestDouble';
 import ServerRequestFactoryDouble from './Double/ServerRequestFactoryDouble';
+import StreamFactoryDouble from './Double/StreamFactoryDouble';
 import UriDouble from './Double/UriDouble';
 import UriFactoryDouble from './Double/UriFactoryDouble';
 
@@ -67,7 +69,13 @@ describe('PsrRequestFactory', () => {
                     .willReturn(uri),
             ]);
 
-            const psrRequestFactory = new PsrRequestFactory(serverRequestFactory, uriFactory);
+            const streamFactory = mockByCalls.create<StreamFactoryInterface>(StreamFactoryDouble, [
+                Call.create('createStreamFromResource')
+                    .with(new ArgumentInstanceOf(PassThrough))
+                    .willReturnCallback((stream: PassThrough) => stream),
+            ]);
+
+            const psrRequestFactory = new PsrRequestFactory(serverRequestFactory, uriFactory, streamFactory);
 
             expect(psrRequestFactory.create(req, res)).toBe(serverRequestWithBody);
 
@@ -170,7 +178,13 @@ describe('PsrRequestFactory', () => {
                     .willReturn(uri),
             ]);
 
-            const psrRequestFactory = new PsrRequestFactory(serverRequestFactory, uriFactory);
+            const streamFactory = mockByCalls.create<StreamFactoryInterface>(StreamFactoryDouble, [
+                Call.create('createStreamFromResource')
+                    .with(new ArgumentInstanceOf(PassThrough))
+                    .willReturnCallback((stream: PassThrough) => stream),
+            ]);
+
+            const psrRequestFactory = new PsrRequestFactory(serverRequestFactory, uriFactory, streamFactory);
 
             expect(psrRequestFactory.create(req, res)).toBe(serverRequestWithHeaderCookie);
 

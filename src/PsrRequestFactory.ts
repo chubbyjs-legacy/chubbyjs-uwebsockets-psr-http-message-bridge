@@ -1,4 +1,5 @@
 import ServerRequestFactoryInterface from '@chubbyjs/psr-http-factory/dist/ServerRequestFactoryInterface';
+import StreamFactoryInterface from '@chubbyjs/psr-http-factory/dist/StreamFactoryInterface';
 import UriFactoryInterface from '@chubbyjs/psr-http-factory/dist/UriFactoryInterface';
 import { Method } from '@chubbyjs/psr-http-message/dist/RequestInterface';
 import { QueryParams } from '@chubbyjs/psr-http-message/dist/ServerRequestInterface';
@@ -11,6 +12,7 @@ class PsrRequestFactory {
     public constructor(
         private serverRequestFactory: ServerRequestFactoryInterface,
         private uriFactory: UriFactoryInterface,
+        private streamFactory: StreamFactoryInterface,
     ) {}
 
     public create(req: HttpRequest, res: HttpResponse) {
@@ -24,7 +26,7 @@ class PsrRequestFactory {
         let serverRequest = this.serverRequestFactory
             .createServerRequest(req.getMethod().toUpperCase() as Method, uri)
             .withProtocolVersion('1.1')
-            .withBody(this.getStream(res));
+            .withBody(this.streamFactory.createStreamFromResource(this.getStream(res)));
 
         const rawCookie = req.getHeader('cookie');
 

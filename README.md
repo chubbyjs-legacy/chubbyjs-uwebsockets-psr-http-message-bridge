@@ -35,7 +35,7 @@ A uWebSockets.js req/res psr-htt-message bridge.
 Through [NPM](https://www.npmjs.com) as [@chubbyjs/chubbyjs-uwebsockets-psr-http-message-bridge][1].
 
 ```sh
-npm i @chubbyjs/chubbyjs-uwebsockets-psr-http-message-bridge@1.0.1 \
+npm i @chubbyjs/chubbyjs-uwebsockets-psr-http-message-bridge@1.1.0 \
     @chubbyjs/chubbyjs-http-message@1.1.0 // or any other psr-http-factory implementation
 ```
 
@@ -45,13 +45,19 @@ npm i @chubbyjs/chubbyjs-uwebsockets-psr-http-message-bridge@1.0.1 \
 import PsrRequestFactory from '@chubbyjs/chubbyjs-uwebsockets-psr-http-message-bridge/dist/PsrRequestFactory';
 import ResponseFactory from '@chubbyjs/chubbyjs-http-message/dist/Factory/ResponseFactory';
 import ServerRequestFactory from '@chubbyjs/chubbyjs-http-message/dist/Factory/ServerRequestFactory';
+import StreamFactory from '@chubbyjs/chubbyjs-http-message/dist/Factory/StreamFactory';
 import UriFactory from '@chubbyjs/chubbyjs-http-message/dist/Factory/UriFactory';
 import UwebsocketResponseEmitter from '@chubbyjs/chubbyjs-uwebsockets-psr-http-message-bridge/dist/UwebsocketResponseEmitter';
 import { HttpRequest, HttpResponse } from 'uWebSockets.js';
 
 const responseFactory = new ResponseFactory();
 
-const psrRequestFactory = new PsrRequestFactory(new ServerRequestFactory(), new UriFactory());
+const psrRequestFactory = new PsrRequestFactory(
+    new ServerRequestFactory(),
+    new UriFactory(),
+    new StreamFactory()
+);
+
 const uwebsocketResponseEmitter = new UwebsocketResponseEmitter();
 
 require('uWebSockets.js')
