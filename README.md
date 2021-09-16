@@ -35,7 +35,7 @@ A uWebSockets.js req/res psr-htt-message bridge.
 Through [NPM](https://www.npmjs.com) as [@chubbyjs/chubbyjs-uwebsockets-psr-http-message-bridge][1].
 
 ```sh
-npm i @chubbyjs/chubbyjs-uwebsockets-psr-http-message-bridge@1.1.0 \
+npm i @chubbyjs/chubbyjs-uwebsockets-psr-http-message-bridge@1.1.1 \
     @chubbyjs/chubbyjs-http-message@1.1.0 // or any other psr-http-factory implementation
 ```
 
@@ -63,12 +63,10 @@ const uwebsocketResponseEmitter = new UwebsocketResponseEmitter();
 require('uWebSockets.js')
     .App()
     .any('/*', (res: HttpResponse, req: HttpRequest) => {
-        const request = psrRequestFactory.create(req, res);
+        const serverRequest = psrRequestFactory.create(req, res);
         const response = responseFactory.createResponse(200);
 
-        console.log(request);
-
-        request.getBody().pipe(response.getBody());
+        serverRequest.getBody().pipe(response.getBody());
 
         uwebsocketResponseEmitter.emit(response, res);
     })
