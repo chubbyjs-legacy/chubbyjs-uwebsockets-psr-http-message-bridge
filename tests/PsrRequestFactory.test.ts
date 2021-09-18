@@ -23,13 +23,13 @@ const mockByCalls = new MockByCalls();
 
 describe('PsrRequestFactory', () => {
     describe('create', () => {
-        test('successful minimal', () => {
+        test('successful', () => {
             const path = '/path';
 
             const req = mockByCalls.create<HttpRequest>(HttpRequestDouble, [
                 Call.create('getQuery').with().willReturn(''),
-                Call.create('getHeader').with('host').willReturn(''),
                 Call.create('getUrl').with().willReturn(path),
+                Call.create('getHeader').with('host').willReturn(''),
                 Call.create('getMethod').with().willReturn('get'),
                 Call.create('getHeader').with('cookie').willReturn(''),
                 Call.create('forEach').with(
@@ -49,15 +49,17 @@ describe('PsrRequestFactory', () => {
                 ),
             ]);
 
+            const uri = mockByCalls.create<UriInterface>(UriDouble, [Call.create('getQuery').with().willReturn('')]);
+
+            const serverRequest = mockByCalls.create<ServerRequestInterface>(ServerRequestDouble);
+
             const serverRequestWithBody = mockByCalls.create<ServerRequestInterface>(ServerRequestDouble, [
-                Call.create('withBody').with(new ArgumentInstanceOf(PassThrough)).willReturnSelf(),
+                Call.create('withBody').with(new ArgumentInstanceOf(PassThrough)).willReturn(serverRequest),
             ]);
 
             const serverRequestWithProtocolVersion = mockByCalls.create<ServerRequestInterface>(ServerRequestDouble, [
                 Call.create('withProtocolVersion').with('1.1').willReturn(serverRequestWithBody),
             ]);
-
-            const uri = mockByCalls.create<UriInterface>(UriDouble, [Call.create('getQuery').with().willReturn('')]);
 
             const serverRequestFactory = mockByCalls.create<ServerRequestFactoryInterface>(ServerRequestFactoryDouble, [
                 Call.create('createServerRequest').with('GET', uri).willReturn(serverRequestWithProtocolVersion),
@@ -77,14 +79,17 @@ describe('PsrRequestFactory', () => {
 
             const psrRequestFactory = new PsrRequestFactory(serverRequestFactory, uriFactory, streamFactory);
 
-            expect(psrRequestFactory.create(req, res)).toBe(serverRequestWithBody);
+            expect(psrRequestFactory.create(req, res)).toBe(serverRequest);
 
             expect(mockByCallsUsed(req)).toBe(true);
             expect(mockByCallsUsed(res)).toBe(true);
+            expect(mockByCallsUsed(uri)).toBe(true);
+            expect(mockByCallsUsed(serverRequest)).toBe(true);
             expect(mockByCallsUsed(serverRequestWithBody)).toBe(true);
             expect(mockByCallsUsed(serverRequestWithProtocolVersion)).toBe(true);
             expect(mockByCallsUsed(serverRequestFactory)).toBe(true);
             expect(mockByCallsUsed(uriFactory)).toBe(true);
+            expect(mockByCallsUsed(streamFactory)).toBe(true);
         });
 
         test('successful maximal', () => {
@@ -94,8 +99,8 @@ describe('PsrRequestFactory', () => {
 
             const req = mockByCalls.create<HttpRequest>(HttpRequestDouble, [
                 Call.create('getQuery').with().willReturn(query),
-                Call.create('getHeader').with('host').willReturn('localhost:8080'),
                 Call.create('getUrl').with().willReturn(path),
+                Call.create('getHeader').with('host').willReturn('localhost:8080'),
                 Call.create('getMethod').with().willReturn('get'),
                 Call.create('getHeader').with('cookie').willReturn(cookie),
                 Call.create('forEach').with(
@@ -117,8 +122,12 @@ describe('PsrRequestFactory', () => {
                 ),
             ]);
 
+            const uri = mockByCalls.create<UriInterface>(UriDouble, [Call.create('getQuery').with().willReturn(query)]);
+
+            const serverRequest = mockByCalls.create<ServerRequestInterface>(ServerRequestDouble);
+
             const serverRequestWithHeaderCookie = mockByCalls.create<ServerRequestInterface>(ServerRequestDouble, [
-                Call.create('withHeader').with('cookie', cookie).willReturnSelf(),
+                Call.create('withHeader').with('cookie', cookie).willReturn(serverRequest),
             ]);
 
             const serverRequestWithHeaderHost = mockByCalls.create<ServerRequestInterface>(ServerRequestDouble, [
@@ -166,8 +175,6 @@ describe('PsrRequestFactory', () => {
                 Call.create('withProtocolVersion').with('1.1').willReturn(serverRequestWithBody),
             ]);
 
-            const uri = mockByCalls.create<UriInterface>(UriDouble, [Call.create('getQuery').with().willReturn(query)]);
-
             const serverRequestFactory = mockByCalls.create<ServerRequestFactoryInterface>(ServerRequestFactoryDouble, [
                 Call.create('createServerRequest').with('GET', uri).willReturn(serverRequestWithProtocolVersion),
             ]);
@@ -186,10 +193,12 @@ describe('PsrRequestFactory', () => {
 
             const psrRequestFactory = new PsrRequestFactory(serverRequestFactory, uriFactory, streamFactory);
 
-            expect(psrRequestFactory.create(req, res)).toBe(serverRequestWithHeaderCookie);
+            expect(psrRequestFactory.create(req, res)).toBe(serverRequest);
 
             expect(mockByCallsUsed(req)).toBe(true);
             expect(mockByCallsUsed(res)).toBe(true);
+            expect(mockByCallsUsed(uri)).toBe(true);
+            expect(mockByCallsUsed(serverRequest)).toBe(true);
             expect(mockByCallsUsed(serverRequestWithHeaderCookie)).toBe(true);
             expect(mockByCallsUsed(serverRequestWithHeaderHost)).toBe(true);
             expect(mockByCallsUsed(serverRequestWithQueryParams)).toBe(true);
@@ -198,6 +207,253 @@ describe('PsrRequestFactory', () => {
             expect(mockByCallsUsed(serverRequestWithProtocolVersion)).toBe(true);
             expect(mockByCallsUsed(serverRequestFactory)).toBe(true);
             expect(mockByCallsUsed(uriFactory)).toBe(true);
+            expect(mockByCallsUsed(streamFactory)).toBe(true);
+        });
+
+        test('failed with reverse proxy cause missing headers', () => {
+            const path = '/path';
+
+            const req = mockByCalls.create<HttpRequest>(HttpRequestDouble, [
+                Call.create('getQuery').with().willReturn(''),
+                Call.create('getUrl').with().willReturn(path),
+                Call.create('getHeader').with('x-forwarded-proto').willReturn(''),
+                Call.create('getHeader').with('x-forwarded-host').willReturn(''),
+                Call.create('getHeader').with('x-forwarded-port').willReturn(''),
+            ]);
+
+            const res = mockByCalls.create<HttpResponse>(HttpResponseDouble);
+
+            const serverRequestFactory = mockByCalls.create<ServerRequestFactoryInterface>(ServerRequestFactoryDouble);
+
+            const uriFactory = mockByCalls.create<UriFactoryInterface>(UriFactoryDouble);
+
+            const streamFactory = mockByCalls.create<StreamFactoryInterface>(StreamFactoryDouble);
+
+            const psrRequestFactory = new PsrRequestFactory(serverRequestFactory, uriFactory, streamFactory, true);
+
+            expect(() => {
+                psrRequestFactory.create(req, res);
+            }).toThrow('Missing "x-forwarded-proto", "x-forwarded-host", "x-forwarded-port" header(s).');
+
+            expect(mockByCallsUsed(req)).toBe(true);
+            expect(mockByCallsUsed(res)).toBe(true);
+            expect(mockByCallsUsed(serverRequestFactory)).toBe(true);
+            expect(mockByCallsUsed(uriFactory)).toBe(true);
+            expect(mockByCallsUsed(streamFactory)).toBe(true);
+        });
+
+        test('successful with reverse proxy', () => {
+            const path = '/path';
+
+            const req = mockByCalls.create<HttpRequest>(HttpRequestDouble, [
+                Call.create('getQuery').with().willReturn(''),
+                Call.create('getUrl').with().willReturn(path),
+                Call.create('getHeader').with('x-forwarded-proto').willReturn('https'),
+                Call.create('getHeader').with('x-forwarded-host').willReturn('example.com'),
+                Call.create('getHeader').with('x-forwarded-port').willReturn('8443'),
+                Call.create('getMethod').with().willReturn('get'),
+                Call.create('getHeader').with('cookie').willReturn(''),
+                Call.create('forEach').with(
+                    new ArgumentCallback((callback: Function) => {
+                        expect(`${callback}`).toMatch(/serverRequest = serverRequest.withHeader\(name, value\);/);
+                    }),
+                ),
+            ]);
+
+            const res = mockByCalls.create<HttpResponse>(HttpResponseDouble, [
+                Call.create('onData').with(
+                    new ArgumentCallback((callback: Function) => {
+                        expect(`${callback}`).toMatch(/stream.write\(Buffer.from\(chunk\)\)/);
+                        expect(`${callback}`).toMatch(/stream.end\(\);/);
+                        callback(new ArrayBuffer(8), false);
+                    }),
+                ),
+            ]);
+
+            const uri = mockByCalls.create<UriInterface>(UriDouble, [Call.create('getQuery').with().willReturn('')]);
+
+            const serverRequest = mockByCalls.create<ServerRequestInterface>(ServerRequestDouble);
+
+            const serverRequestWithBody = mockByCalls.create<ServerRequestInterface>(ServerRequestDouble, [
+                Call.create('withBody').with(new ArgumentInstanceOf(PassThrough)).willReturn(serverRequest),
+            ]);
+
+            const serverRequestWithProtocolVersion = mockByCalls.create<ServerRequestInterface>(ServerRequestDouble, [
+                Call.create('withProtocolVersion').with('1.1').willReturn(serverRequestWithBody),
+            ]);
+
+            const serverRequestFactory = mockByCalls.create<ServerRequestFactoryInterface>(ServerRequestFactoryDouble, [
+                Call.create('createServerRequest').with('GET', uri).willReturn(serverRequestWithProtocolVersion),
+            ]);
+
+            const uriFactory = mockByCalls.create<UriFactoryInterface>(UriFactoryDouble, [
+                Call.create('createUri')
+                    .with('https://example.com:8443' + path)
+                    .willReturn(uri),
+            ]);
+
+            const streamFactory = mockByCalls.create<StreamFactoryInterface>(StreamFactoryDouble, [
+                Call.create('createStreamFromResource')
+                    .with(new ArgumentInstanceOf(PassThrough))
+                    .willReturnCallback((stream: PassThrough) => stream),
+            ]);
+
+            const psrRequestFactory = new PsrRequestFactory(serverRequestFactory, uriFactory, streamFactory, true);
+
+            expect(psrRequestFactory.create(req, res)).toBe(serverRequest);
+
+            expect(mockByCallsUsed(req)).toBe(true);
+            expect(mockByCallsUsed(res)).toBe(true);
+            expect(mockByCallsUsed(uri)).toBe(true);
+            expect(mockByCallsUsed(serverRequest)).toBe(true);
+            expect(mockByCallsUsed(serverRequestWithBody)).toBe(true);
+            expect(mockByCallsUsed(serverRequestWithProtocolVersion)).toBe(true);
+            expect(mockByCallsUsed(serverRequestFactory)).toBe(true);
+            expect(mockByCallsUsed(uriFactory)).toBe(true);
+            expect(mockByCallsUsed(streamFactory)).toBe(true);
+        });
+
+        test('successful with overriden schema and host', () => {
+            const path = '/path';
+
+            const req = mockByCalls.create<HttpRequest>(HttpRequestDouble, [
+                Call.create('getQuery').with().willReturn(''),
+                Call.create('getUrl').with().willReturn(path),
+                Call.create('getHeader').with('host').willReturn(''),
+                Call.create('getMethod').with().willReturn('get'),
+                Call.create('getHeader').with('cookie').willReturn(''),
+                Call.create('forEach').with(
+                    new ArgumentCallback((callback: Function) => {
+                        expect(`${callback}`).toMatch(/serverRequest = serverRequest.withHeader\(name, value\);/);
+                    }),
+                ),
+            ]);
+
+            const res = mockByCalls.create<HttpResponse>(HttpResponseDouble, [
+                Call.create('onData').with(
+                    new ArgumentCallback((callback: Function) => {
+                        expect(`${callback}`).toMatch(/stream.write\(Buffer.from\(chunk\)\)/);
+                        expect(`${callback}`).toMatch(/stream.end\(\);/);
+                        callback(new ArrayBuffer(8), false);
+                    }),
+                ),
+            ]);
+
+            const uri = mockByCalls.create<UriInterface>(UriDouble, [Call.create('getQuery').with().willReturn('')]);
+
+            const serverRequest = mockByCalls.create<ServerRequestInterface>(ServerRequestDouble);
+
+            const serverRequestWithBody = mockByCalls.create<ServerRequestInterface>(ServerRequestDouble, [
+                Call.create('withBody').with(new ArgumentInstanceOf(PassThrough)).willReturn(serverRequest),
+            ]);
+
+            const serverRequestWithProtocolVersion = mockByCalls.create<ServerRequestInterface>(ServerRequestDouble, [
+                Call.create('withProtocolVersion').with('1.1').willReturn(serverRequestWithBody),
+            ]);
+
+            const serverRequestFactory = mockByCalls.create<ServerRequestFactoryInterface>(ServerRequestFactoryDouble, [
+                Call.create('createServerRequest').with('GET', uri).willReturn(serverRequestWithProtocolVersion),
+            ]);
+
+            const uriFactory = mockByCalls.create<UriFactoryInterface>(UriFactoryDouble, [
+                Call.create('createUri')
+                    .with('https://example.com:8443' + path)
+                    .willReturn(uri),
+            ]);
+
+            const streamFactory = mockByCalls.create<StreamFactoryInterface>(StreamFactoryDouble, [
+                Call.create('createStreamFromResource')
+                    .with(new ArgumentInstanceOf(PassThrough))
+                    .willReturnCallback((stream: PassThrough) => stream),
+            ]);
+
+            const psrRequestFactory = new PsrRequestFactory(serverRequestFactory, uriFactory, streamFactory, {
+                schema: 'https',
+                host: 'example.com:8443',
+            });
+
+            expect(psrRequestFactory.create(req, res)).toBe(serverRequest);
+
+            expect(mockByCallsUsed(req)).toBe(true);
+            expect(mockByCallsUsed(res)).toBe(true);
+            expect(mockByCallsUsed(uri)).toBe(true);
+            expect(mockByCallsUsed(serverRequest)).toBe(true);
+            expect(mockByCallsUsed(serverRequestWithBody)).toBe(true);
+            expect(mockByCallsUsed(serverRequestWithProtocolVersion)).toBe(true);
+            expect(mockByCallsUsed(serverRequestFactory)).toBe(true);
+            expect(mockByCallsUsed(uriFactory)).toBe(true);
+            expect(mockByCallsUsed(streamFactory)).toBe(true);
+        });
+
+        test('successful with overriden schema', () => {
+            const path = '/path';
+
+            const req = mockByCalls.create<HttpRequest>(HttpRequestDouble, [
+                Call.create('getQuery').with().willReturn(''),
+                Call.create('getUrl').with().willReturn(path),
+                Call.create('getHeader').with('host').willReturn('example.com:8443'),
+                Call.create('getMethod').with().willReturn('get'),
+                Call.create('getHeader').with('cookie').willReturn(''),
+                Call.create('forEach').with(
+                    new ArgumentCallback((callback: Function) => {
+                        expect(`${callback}`).toMatch(/serverRequest = serverRequest.withHeader\(name, value\);/);
+                    }),
+                ),
+            ]);
+
+            const res = mockByCalls.create<HttpResponse>(HttpResponseDouble, [
+                Call.create('onData').with(
+                    new ArgumentCallback((callback: Function) => {
+                        expect(`${callback}`).toMatch(/stream.write\(Buffer.from\(chunk\)\)/);
+                        expect(`${callback}`).toMatch(/stream.end\(\);/);
+                        callback(new ArrayBuffer(8), false);
+                    }),
+                ),
+            ]);
+
+            const uri = mockByCalls.create<UriInterface>(UriDouble, [Call.create('getQuery').with().willReturn('')]);
+
+            const serverRequest = mockByCalls.create<ServerRequestInterface>(ServerRequestDouble);
+
+            const serverRequestWithBody = mockByCalls.create<ServerRequestInterface>(ServerRequestDouble, [
+                Call.create('withBody').with(new ArgumentInstanceOf(PassThrough)).willReturn(serverRequest),
+            ]);
+
+            const serverRequestWithProtocolVersion = mockByCalls.create<ServerRequestInterface>(ServerRequestDouble, [
+                Call.create('withProtocolVersion').with('1.1').willReturn(serverRequestWithBody),
+            ]);
+
+            const serverRequestFactory = mockByCalls.create<ServerRequestFactoryInterface>(ServerRequestFactoryDouble, [
+                Call.create('createServerRequest').with('GET', uri).willReturn(serverRequestWithProtocolVersion),
+            ]);
+
+            const uriFactory = mockByCalls.create<UriFactoryInterface>(UriFactoryDouble, [
+                Call.create('createUri')
+                    .with('https://example.com:8443' + path)
+                    .willReturn(uri),
+            ]);
+
+            const streamFactory = mockByCalls.create<StreamFactoryInterface>(StreamFactoryDouble, [
+                Call.create('createStreamFromResource')
+                    .with(new ArgumentInstanceOf(PassThrough))
+                    .willReturnCallback((stream: PassThrough) => stream),
+            ]);
+
+            const psrRequestFactory = new PsrRequestFactory(serverRequestFactory, uriFactory, streamFactory, {
+                schema: 'https',
+            });
+
+            expect(psrRequestFactory.create(req, res)).toBe(serverRequest);
+
+            expect(mockByCallsUsed(req)).toBe(true);
+            expect(mockByCallsUsed(res)).toBe(true);
+            expect(mockByCallsUsed(uri)).toBe(true);
+            expect(mockByCallsUsed(serverRequest)).toBe(true);
+            expect(mockByCallsUsed(serverRequestWithBody)).toBe(true);
+            expect(mockByCallsUsed(serverRequestWithProtocolVersion)).toBe(true);
+            expect(mockByCallsUsed(serverRequestFactory)).toBe(true);
+            expect(mockByCallsUsed(uriFactory)).toBe(true);
+            expect(mockByCallsUsed(streamFactory)).toBe(true);
         });
     });
 });
