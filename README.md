@@ -28,14 +28,14 @@ A uWebSockets.js req/res psr-htt-message bridge.
  * [@chubbyjs/psr-http-message][3]: ^1.2.1
  * [cookie][4]: ^0.4.1
  * [qs][5]: ^6.10.1
- * [uWebSockets.js][6]: github:uNetworking/uWebSockets.js#v19.3.0
+ * [uWebSockets.js][6]: github:uNetworking/uWebSockets.js#v19.5.0
 
 ## Installation
 
 Through [NPM](https://www.npmjs.com) as [@chubbyjs/chubbyjs-uwebsockets-psr-http-message-bridge][1].
 
 ```sh
-npm i @chubbyjs/chubbyjs-uwebsockets-psr-http-message-bridge@1.2.0 \
+npm i @chubbyjs/chubbyjs-uwebsockets-psr-http-message-bridge@1.2.1 \
     @chubbyjs/chubbyjs-http-message@1.1.1
 ```
 
