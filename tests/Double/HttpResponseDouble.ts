@@ -8,10 +8,10 @@ class HttpResponseDouble implements HttpResponse {
     writeHeader(key: RecognizedString, value: RecognizedString): HttpResponse {
         throw new Error('Method not implemented.');
     }
-    write(chunk: RecognizedString): HttpResponse {
+    write(chunk: RecognizedString): boolean {
         throw new Error('Method not implemented.');
     }
-    end(body?: RecognizedString): HttpResponse {
+    end(body?: RecognizedString, closeConnection?: boolean): HttpResponse {
         throw new Error('Method not implemented.');
     }
     tryEnd(fullBodyOrChunk: RecognizedString, totalSize: number): [boolean, boolean] {
@@ -44,7 +44,7 @@ class HttpResponseDouble implements HttpResponse {
     getProxiedRemoteAddressAsText(): ArrayBuffer {
         throw new Error('Method not implemented.');
     }
-    cork(cb: () => void): void {
+    cork(cb: () => void): HttpResponse {
         throw new Error('Method not implemented.');
     }
     upgrade<T>(
