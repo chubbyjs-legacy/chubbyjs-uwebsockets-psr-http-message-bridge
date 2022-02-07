@@ -1,6 +1,6 @@
 {
   "name": "@chubbyjs/chubbyjs-uwebsockets-psr-http-message-bridge",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "description": "A uwebsockets req/res psr-htt-message bridge.",
   "keywords": [
     "chubbyjs",
