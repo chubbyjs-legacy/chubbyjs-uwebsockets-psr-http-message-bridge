@@ -23,7 +23,7 @@ A uWebSockets.js req/res psr-htt-message bridge.
 
 ## Requirements
 
- * node: 12
+ * node: 14
  * [@chubbyjs/psr-http-factory][2]: ^1.1.0
  * [@chubbyjs/psr-http-message][3]: ^1.2.1
  * [cookie][4]: ^0.4.1
