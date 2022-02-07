@@ -35,7 +35,7 @@ A uWebSockets.js req/res psr-htt-message bridge.
 Through [NPM](https://www.npmjs.com) as [@chubbyjs/chubbyjs-uwebsockets-psr-http-message-bridge][1].
 
 ```sh
-npm i @chubbyjs/chubbyjs-uwebsockets-psr-http-message-bridge@1.3.0 \
+npm i @chubbyjs/chubbyjs-uwebsockets-psr-http-message-bridge@1.3.1 \
     @chubbyjs/chubbyjs-http-message@1.1.1
 ```
 
