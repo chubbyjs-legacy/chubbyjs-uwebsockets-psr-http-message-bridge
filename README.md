@@ -28,7 +28,7 @@ A uWebSockets.js req/res psr-htt-message bridge.
  * [@chubbyjs/psr-http-message][3]: ^1.2.1
  * [cookie][4]: ^0.4.1
  * [qs][5]: ^6.10.1
- * [uWebSockets.js][6]: github:uNetworking/uWebSockets.js#v19.5.0
+ * [uWebSockets.js][6]: github:uNetworking/uWebSockets.js#v20.6.0
 
 ## Installation
 
